@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flickr Photo Wall</title>
+    <style>
+        #gallery {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        #gallery img {
+            margin: 5px;
+            width: 200px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Flickr Photo Wall</h1>
+
+    <div id="gallery">Loading images...</div>
+
+    <script>
+        var imglist_Url = 
+        `https://api.flickr.com/services/rest/?method=flickr.photos.getRecent&api_key=ca370d51a054836007519a00ff4ce59e&per_page=10&format=json&nojsoncallback=1`;
+
+        function getimg() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', imglist_Url, true);  // 從 Flickr 獲取最近的照片資料
+            xhr.send();
+
+            xhr.onload = function () {
+                var data = JSON.parse(this.responseText);
+                add_new_img(data.photos.photo);  // 傳入照片資料，並處理圖片顯示
+            }
+        }
+
+        function add_new_img(dataset) {
+            var gal = document.getElementById("gallery");
+            dataset.forEach(function(item) {
+                // 根據每個 item（照片）的 ID、farm、server 和 secret，構建圖片的 URL
+                var imgUrl = `https://farm${item.farm}.staticflickr.com/${item.server}/${item.id}_${item.secret}.jpg`;
+                
+                // 創建一個 <img> 標籤並設置來源為 imgUrl
+                var img = document.createElement("img");
+                img.setAttribute("src", imgUrl);  // 設定圖片來源
+
+                // 將創建的圖片元素添加到照片牆（gallery）中
+                gal.appendChild(img);
+            });
+        }
+
+        // 初始化載入圖片
+        getimg();
+    </script>
+
+</body>
+</html>
