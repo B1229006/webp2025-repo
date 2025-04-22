@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8">
+    <title>景點觀光展覽資訊</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  </head>
+<body>
+
+<h1>景點觀光展覽資訊</h1>
+
+<input type="text" id="searchInput" placeholder="搜尋" oninput="searchData()" class="form-control" style="width: 300px; margin-bottom: 20px;">
+
+<table id="csie" class="table table-striped table-hover">
+  <tr>
+    <th >名稱</th>
+    <th >地點</th>
+    <th >票價</th>
+  </tr>
+</table>
+
+<button onclick="changePage('up')"><span>上一頁</span></button>
+<span id="pageInfo"> 1/1 </span>
+<button onclick="changePage('down')"><span>下一頁</span></button>
+
+<!--<button onclick="delOldData()" class="btn btn-danger">清除資料</button>-->
+
+<script>
+  var openUrl = "https://cloud.culture.tw/frontsite/trans/SearchShowAction.do?method=doFindTypeJ&category=6";
+
+  var xhr = new XMLHttpRequest();
+  var dataset = [];
+  var filteredData = [];
+  var totalItems = 0;
+
+  var currentPage = 1;
+  var totalPage = 1;
+  var searchState = 0;
+
+  xhr.open('GET', openUrl, true);
+  xhr.send();
+  xhr.onreadystatechange = function() { //監聽請求狀態變化
+    if (this.readyState == 4 && this.status == 200) {
+      dataset = JSON.parse(this.responseText);
+      totalItems = dataset.length;
+      totalPage = Math.floor(totalItems/10)+1;
+      addNewData(currentPage, dataset);
+      
+    }
+  };
+
+
+  function addNewData(index, data) {
+    delOldData();
+    updatePageInfo()
+    var myTable = document.getElementById("csie");
+    for(i = (index-1)*10; i<index*10 && i<totalItems; i++){
+      var row = myTable.insertRow(-1);
+      row.insertCell(0).innerHTML = data[i]['title'];
+      row.insertCell(1).innerHTML = data[i]['showInfo'][0]['location'];
+      row.insertCell(2).innerHTML = data[i]['showInfo'][0]['price'];
+
+    }
+  }
+
+  function changePage(action){
+    if(searchState==1) data = filteredData;
+    else data = dataset;
+    switch(action){
+      case 'up':
+        if(currentPage>1) addNewData(--currentPage, data);
+        break;
+        
+      case 'down':
+        if(currentPage<totalPage) addNewData(++currentPage, data);
+        break;
+        
+    }
+  }
+
+  function updatePageInfo() {
+    document.getElementById("pageInfo").innerText = currentPage + " / " + totalPage;
+  }
+
+
+  function searchData() {
+    var searchTerm = document.getElementById("searchInput").value.toLowerCase();
+
+    // 過濾資料
+    if (searchTerm === "") {
+      filteredData = [...dataset]; // 如果搜尋框為空，顯示所有資料
+      searchState = 0;
+    } else {
+      searchState = 1;
+      filteredData = dataset.filter(function(data) {
+        return data.title && data.title.toLowerCase().includes(searchTerm) ||
+          data.showInfo[0].location.toLowerCase().includes(searchTerm);
+      });
+    }
+
+    // 更新資料總數和頁數
+    totalItems = filteredData.length;
+    totalPage = Math.floor(totalItems / 10) + (totalItems % 10 === 0 ? 0 : 1);
+    
+    // 重置為第1頁並更新顯示
+    currentPage = 1;
+    addNewData(currentPage, filteredData);
+    updatePageInfo();
+  }
+
+  function delOldData() {
+    var myTable = document.getElementById("csie");
+    var rowCount = myTable.rows.length;
+    for (var i = rowCount - 1; i > 0; i--) {
+      myTable.deleteRow(i);
+    }
+  }
+
+
+</script>
+
+</body>
+</html>
